@@ -12,10 +12,8 @@
         <meta name="theme-color" content="#1e40af">
         <script>
             if ('serviceWorker' in navigator) {
-                window.addEventListener('load', function () {
-                    navigator.serviceWorker.register('/build/sw.js', { scope: '/' })
-                        .catch(function (err) { console.warn('SW registration failed:', err); });
-                });
+                navigator.serviceWorker.register('/build/sw.js', { scope: '/' })
+                    .catch(function (err) { console.warn('SW registration failed:', err); });
             }
         </script>
     </head>
