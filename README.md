@@ -105,62 +105,49 @@ All demo accounts use the same password: **`CardioSecure2026!`**
 
 ## Tech Stack
 
-| Layer | Technology | Purpose |
-|-------|-----------|---------|
-| **Backend** | Laravel 12, PHP 8.2+ | MVC framework, routing, middleware |
-| **Authentication** | Laravel Fortify | Session-based auth, email verification, TOTP 2FA |
-| **Frontend** | Vue 3 + TypeScript | Reactive UI components |
-| **SPA Bridge** | Inertia.js v3 | Server-driven single-page app (no REST API needed) |
-| **Styling** | Tailwind CSS 4 | Utility-first CSS framework |
-| **Database** | MySQL 8.4 | Relational data storage |
-| **RBAC** | Spatie laravel-permission v7 | Role and permission management |
-| **Encryption** | Laravel Encrypted Casts | AES-256-CBC for sensitive fields |
-| **Build Tool** | Vite 8 | Frontend asset bundling + HMR |
-| **PWA** | vite-plugin-pwa | Service worker, manifest, install prompt |
-| **Push Notifications** | minishlink/web-push | VAPID-based Web Push API |
-| **Email (dev)** | Mailpit | Local email testing UI |
-| **Routing (JS)** | Ziggy | Named Laravel routes in JavaScript |
-| **Dev Environment** | Docker Compose (Laravel Sail) | MySQL, PHP, Mailpit containers |
+- **Laravel 13 (PHP 8.3+)** handles all backend logic, routing, authentication, and database operations. It serves as the core framework for the entire application.
+- **Vue 3 + TypeScript** powers the frontend UI. All pages are Vue single-file components that receive data as props from the backend.
+- **Inertia.js v3** connects Laravel and Vue without needing a REST API. Instead of returning JSON, controllers return Inertia responses that render Vue components directly, so the app feels like a single-page application while being fully server-driven.
+- **Tailwind CSS 4** provides utility-first styling. All UI is built with Tailwind classes directly in Vue templates.
+- **MySQL 8.4** stores all application data, including users, appointments, medical records, and audit logs. Sensitive insurance fields are encrypted at the application level using AES-256 before being stored.
+- **Laravel Fortify** manages authentication, including login, registration, email verification, password reset, and TOTP two-factor authentication.
+- **Spatie laravel-permission v7** handles role-based access control. Four roles (admin, staff, doctor, patient) each have specific permissions checked at both the route and controller level.
+- **Vite 8** bundles and serves the frontend assets during development with hot module replacement, and compiles them into optimized static files for production.
+- **vite-plugin-pwa** turns the app into an installable Progressive Web App with a service worker for offline caching and push notification handling.
+- **minishlink/web-push** sends push notifications to patients for medication reminders using the VAPID protocol.
+- **Ziggy** exposes Laravel's named routes to JavaScript, so Vue components can generate URLs without hardcoding paths.
+- **Mailpit** captures all outgoing emails during development, providing a web UI at port 8025 to inspect verification emails and password resets without configuring a real mail server.
+- **Docker Compose (Laravel Sail)** packages the entire development environment into three containers (PHP app, MySQL, Mailpit), so the project runs with a single `docker compose up -d` command.
 
 ---
 
 ## Architecture
 
-CardioSecure follows a **monolithic Laravel + Inertia.js** architecture. There is no separate API layer , all data flows through Inertia controllers.
+CardioSecure is a **monolithic application** where the backend and frontend live in the same codebase and are deployed together. There is no separate API server or frontend server in production.
 
-### Request Flow
+### How the backend connects to the frontend
+
+Laravel controllers fetch data from MySQL using Eloquent ORM, then pass it to Vue components through Inertia.js. Instead of returning JSON like a typical API, controllers call `Inertia::render('PageName', $props)`, which sends the data along with the page component name. On the client side, Inertia picks up this response, loads the matching Vue component, and renders it with the received props. This means the frontend behaves like a single-page app (no full page reloads on navigation), but all routing and data logic stays on the server.
+
+### How the database fits in
+
+All data flows through Laravel's Eloquent ORM. Models define relationships (a Patient has many Appointments, a Doctor has many MedicalRecords, etc.) and the framework generates parameterized SQL queries automatically, which prevents SQL injection. Sensitive insurance fields use Laravel's `encrypted` cast, so the data is encrypted with AES-256 before it reaches MySQL and decrypted when read back into PHP.
+
+### How authentication and authorization work
+
+Every request passes through a middleware stack before reaching a controller. First, `auth` checks if the user is logged in. Then `verified` confirms their email is verified. Next, `mfa` (EnsureMfaIsSetup) ensures they have completed two-factor authentication setup. Finally, `role:patient` (or doctor, staff, admin) checks their role. Inside controllers, Laravel Policies add a second layer by checking record ownership, so a patient can only see their own data even if they manipulate the URL.
+
+### How push notifications work
+
+When a patient enables notifications in the browser, the app saves their push subscription (endpoint URL + keys) to the database. A scheduled Laravel command (`reminders:send`) runs every minute, checks which medication reminders match the current time, and sends a Web Push notification to the patient's subscribed devices using VAPID keys.
+
+### Request lifecycle summary
 
 ```
-Browser Request
-    |
-    v
-Laravel Router
-    |
-    v
-Middleware Stack [Auth -> Verified -> MFA -> Role]
-    |
-    v
-Controller (PHP)
-    |
-    v
-Eloquent ORM -> MySQL Database
-    |
-    v
-Inertia::render('Page', $props)
-    |
-    v
-Vue Component (client-side render with props)
-    |
-    v
-HTML Response to Browser
+Browser -> Laravel Router -> Middleware [Auth, Verified, MFA, Role]
+    -> Controller -> Eloquent ORM -> MySQL
+    -> Inertia::render() -> Vue Component -> HTML in Browser
 ```
-
-### Key Architectural Decisions
-
-- **Inertia.js** eliminates the need for a REST/GraphQL API. The frontend receives props directly from PHP controllers, with full-page type safety.
-- **Persistent layouts** (`defineOptions({ layout: XLayout })`) prevent sidebar re-renders on navigation.
-- **Server-side authorization** via Laravel Policies prevents IDOR attacks. Every model access is checked against the authenticated user.
-- **Encrypted Eloquent casts** transparently encrypt/decrypt sensitive insurance data at the model layer.
 
 ---
 
