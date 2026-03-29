@@ -105,19 +105,37 @@ All demo accounts use the same password: **`CardioSecure2026!`**
 
 ## Tech Stack
 
-- **Laravel 13 (PHP 8.3+)** handles all backend logic, routing, authentication, and database operations. It serves as the core framework for the entire application.
-- **Vue 3 + TypeScript** powers the frontend UI. All pages are Vue single-file components that receive data as props from the backend.
-- **Inertia.js v3** connects Laravel and Vue without needing a REST API. Instead of returning JSON, controllers return Inertia responses that render Vue components directly, so the app feels like a single-page application while being fully server-driven.
-- **Tailwind CSS 4** provides utility-first styling. All UI is built with Tailwind classes directly in Vue templates.
-- **MySQL 8.4** stores all application data, including users, appointments, medical records, and audit logs. Sensitive insurance fields are encrypted at the application level using AES-256 before being stored.
-- **Laravel Fortify** manages authentication, including login, registration, email verification, password reset, and TOTP two-factor authentication.
-- **Spatie laravel-permission v7** handles role-based access control. Four roles (admin, staff, doctor, patient) each have specific permissions checked at both the route and controller level.
-- **Vite 8** bundles and serves the frontend assets during development with hot module replacement, and compiles them into optimized static files for production.
-- **vite-plugin-pwa** turns the app into an installable Progressive Web App with a service worker for offline caching and push notification handling.
-- **minishlink/web-push** sends push notifications to patients for medication reminders using the VAPID protocol.
+### Backend
+
+- **Laravel 13 (PHP 8.3+)** is the core framework handling routing, controllers, middleware, and database operations.
+- **Laravel Fortify** manages authentication: login, registration, email verification, password reset, and TOTP two-factor authentication.
+- **Spatie laravel-permission v7** handles role-based access control with four roles (admin, staff, doctor, patient), each with specific permissions checked at both the route and controller level.
+- **Laravel Encrypted Casts** provide AES-256-CBC encryption for sensitive insurance fields (policy number, tessera sanitaria, holder name) transparently at the model layer.
+
+### Frontend
+
+- **Vue 3 + TypeScript** powers all UI pages as single-file components that receive data as props from the backend.
+- **Tailwind CSS 4** provides utility-first styling applied directly in Vue templates.
+- **Vite 8** bundles frontend assets during development with hot module replacement, and compiles them into optimized static files for production.
 - **Ziggy** exposes Laravel's named routes to JavaScript, so Vue components can generate URLs without hardcoding paths.
-- **Mailpit** captures all outgoing emails during development, providing a web UI at port 8025 to inspect verification emails and password resets without configuring a real mail server.
-- **Docker Compose (Laravel Sail)** packages the entire development environment into three containers (PHP app, MySQL, Mailpit), so the project runs with a single `docker compose up -d` command.
+
+### Backend-Frontend Bridge
+
+- **Inertia.js v3** connects Laravel and Vue without needing a REST API. Controllers return Inertia responses that render Vue components directly, so the app feels like a single-page application while all routing and data logic stays on the server.
+
+### Database
+
+- **MySQL 8.4** stores all application data (users, appointments, medical records, audit logs). Laravel's Eloquent ORM handles all queries with parameterized statements to prevent SQL injection.
+
+### PWA and Push Notifications
+
+- **vite-plugin-pwa** turns the app into an installable Progressive Web App with a service worker for offline caching.
+- **minishlink/web-push** sends push notifications to patients for medication reminders using the VAPID protocol.
+
+### Development Environment
+
+- **Docker Compose (Laravel Sail)** packages everything into three containers (PHP app, MySQL, Mailpit), so the project runs with a single `docker compose up -d` command.
+- **Mailpit** captures all outgoing emails during development, providing a web UI at port 8025 to inspect verification emails and password resets without a real mail server.
 
 ---
 
