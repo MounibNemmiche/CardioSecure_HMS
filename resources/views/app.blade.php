@@ -15,6 +15,13 @@
                 navigator.serviceWorker.register('/build/sw.js', { scope: '/' })
                     .catch(function (err) { console.warn('SW registration failed:', err); });
             }
+            // Capture beforeinstallprompt globally so it is available regardless of which page mounts first
+            window._pwaInstallPrompt = null;
+            window.addEventListener('beforeinstallprompt', function (e) {
+                e.preventDefault();
+                window._pwaInstallPrompt = e;
+                window.dispatchEvent(new CustomEvent('pwa-install-ready'));
+            });
         </script>
     </head>
     <body class="antialiased bg-gray-50">

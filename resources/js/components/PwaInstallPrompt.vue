@@ -30,7 +30,19 @@ function dismiss() {
 }
 
 onMounted(() => {
+    // Pick up the event if it already fired before this component mounted
+    if ((window as any)._pwaInstallPrompt) {
+        deferredPrompt.value = (window as any)._pwaInstallPrompt
+        if (!dismissed.value) showPrompt.value = true
+    }
+    // Also listen for future fires and for the global relay event
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
+    window.addEventListener('pwa-install-ready', () => {
+        if ((window as any)._pwaInstallPrompt && !dismissed.value) {
+            deferredPrompt.value = (window as any)._pwaInstallPrompt
+            showPrompt.value = true
+        }
+    })
     window.addEventListener('appinstalled', () => {
         showPrompt.value = false
     })
