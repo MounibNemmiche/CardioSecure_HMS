@@ -32,6 +32,9 @@ docker-compose.override.yml
 # Build output
 /public/build
 
+# Tests
+/tests
+
 # Claude Code
 .claude/
 
