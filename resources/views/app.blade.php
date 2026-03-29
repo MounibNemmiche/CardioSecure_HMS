@@ -8,7 +8,16 @@
         @routes
         @vite(['resources/css/app.css', 'resources/js/app.js'])
         @inertiaHead
-        @vitePwa
+        <link rel="manifest" href="/manifest.webmanifest">
+        <meta name="theme-color" content="#1e40af">
+        <script>
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function () {
+                    navigator.serviceWorker.register('/build/sw.js', { scope: '/' })
+                        .catch(function (err) { console.warn('SW registration failed:', err); });
+                });
+            }
+        </script>
     </head>
     <body class="antialiased bg-gray-50">
         @inertia
