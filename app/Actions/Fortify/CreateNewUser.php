@@ -45,6 +45,7 @@ class CreateNewUser implements CreatesNewUsers
                 'name' => $input['name'],
                 'email' => $input['email'],
                 'password' => Hash::make($input['password']),
+                'email_verified_at' => now(),
             ]);
 
             $user->assignRole('patient');
