@@ -8,6 +8,7 @@
         @routes
         @vite(['resources/css/app.css', 'resources/js/app.js'])
         @inertiaHead
+        @vitePwa
     </head>
     <body class="antialiased bg-gray-50">
         @inertia
