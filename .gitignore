@@ -1,0 +1,40 @@
+# Project documentation (private, not for repo)
+PRD.md
+CLAUDE.md
+cardiosecure_user_flow_journey.md
+PROJECT_REPORT.md
+PROJECT_STATUS.md
+DEPLOYMENT_GUIDE.md
+PHASE1_REPORT.md
+
+# Laravel
+/vendor
+/node_modules
+/public/hot
+/public/storage
+/storage/*.key
+/.env
+/.env.backup
+/.env.production
+/.phpunit.result.cache
+Homestead.json
+Homestead.yaml
+npm-debug.log
+yarn-error.log
+/.fleet
+/.idea
+/.vscode
+/.zed
+
+# Sail / Docker
+docker-compose.override.yml
+
+# Build output
+/public/build
+
+# Claude Code
+.claude/
+
+# OS
+.DS_Store
+Thumbs.db
