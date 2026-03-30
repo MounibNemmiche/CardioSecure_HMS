@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useForm } from '@inertiajs/vue3'
+import { useForm, router } from '@inertiajs/vue3'
 import PatientLayout from '@/layouts/PatientLayout.vue'
 import type { MedicationReminder } from '@/types'
 
@@ -12,6 +12,7 @@ const props = defineProps<{
 
 const showForm = ref(false)
 const editingId = ref<number | null>(null)
+const confirmDeleteId = ref<number | null>(null)
 
 const form = useForm({
     medication_name: '',
@@ -22,6 +23,7 @@ const form = useForm({
 
 function openNew() {
     editingId.value = null
+    confirmDeleteId.value = null
     form.reset()
     form.reminder_time = '08:00'
     showForm.value = true
@@ -29,6 +31,8 @@ function openNew() {
 
 function openEdit(r: MedicationReminder) {
     editingId.value = r.id
+    confirmDeleteId.value = null
+    showForm.value = false
     form.medication_name = r.medication_name
     form.dosage = r.dosage
     form.reminder_time = r.reminder_time.substring(0, 5)
@@ -36,10 +40,16 @@ function openEdit(r: MedicationReminder) {
     showForm.value = true
 }
 
+function cancelForm() {
+    showForm.value = false
+    editingId.value = null
+    form.reset()
+}
+
 function submit() {
     if (editingId.value) {
         form.put(`/patient/medications/${editingId.value}`, {
-            onSuccess: () => { showForm.value = false; form.reset() },
+            onSuccess: () => { showForm.value = false; editingId.value = null; form.reset() },
         })
     } else {
         form.post('/patient/medications', {
@@ -49,13 +59,20 @@ function submit() {
 }
 
 function toggleActive(r: MedicationReminder) {
-    useForm({}).patch(`/patient/medications/${r.id}/toggle`)
+    router.patch(`/patient/medications/${r.id}/toggle`, {}, { preserveScroll: true })
 }
 
-function deleteReminder(r: MedicationReminder) {
-    if (confirm('Delete this medication reminder?')) {
-        useForm({}).delete(`/patient/medications/${r.id}`)
-    }
+function askDelete(r: MedicationReminder) {
+    confirmDeleteId.value = r.id
+}
+
+function confirmDelete(r: MedicationReminder) {
+    confirmDeleteId.value = null
+    router.delete(`/patient/medications/${r.id}`, { preserveScroll: true })
+}
+
+function cancelDelete() {
+    confirmDeleteId.value = null
 }
 
 function formatTime(time: string) {
@@ -126,7 +143,7 @@ function formatTime(time: string) {
                     <button
                         type="button"
                         class="px-4 py-2 text-sm text-gray-600 hover:text-gray-900"
-                        @click="showForm = false"
+                        @click="cancelForm"
                     >
                         Cancel
                     </button>
@@ -156,56 +173,74 @@ function formatTime(time: string) {
             <div
                 v-for="r in reminders"
                 :key="r.id"
-                class="bg-white border border-gray-200 rounded-xl p-4 flex items-center gap-4 transition-opacity"
-                :class="{ 'opacity-50': !r.is_active }"
+                class="bg-white border border-gray-200 rounded-xl p-4 transition-opacity"
+                :class="{ 'opacity-60': !r.is_active }"
             >
-                <!-- Time badge -->
-                <div class="flex-shrink-0 w-16 h-16 bg-blue-50 rounded-lg flex flex-col items-center justify-center">
-                    <span class="text-lg font-bold text-blue-800">{{ formatTime(r.reminder_time) }}</span>
-                </div>
-
-                <!-- Info -->
-                <div class="flex-1 min-w-0">
-                    <div class="flex items-center gap-2">
-                        <h3 class="font-semibold text-gray-900">{{ r.medication_name }}</h3>
-                        <span class="text-xs px-2 py-0.5 rounded-full" :class="r.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'">
-                            {{ r.is_active ? 'Active' : 'Paused' }}
-                        </span>
+                <!-- Confirm delete row -->
+                <div v-if="confirmDeleteId === r.id" class="flex items-center justify-between gap-3">
+                    <p class="text-sm text-gray-700">Delete <strong>{{ r.medication_name }}</strong>?</p>
+                    <div class="flex gap-2">
+                        <button
+                            class="px-3 py-1.5 text-xs font-medium text-gray-600 hover:text-gray-900 border border-gray-300 rounded-lg transition-colors"
+                            @click="cancelDelete"
+                        >Cancel</button>
+                        <button
+                            class="px-3 py-1.5 text-xs font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
+                            @click="confirmDelete(r)"
+                        >Delete</button>
                     </div>
-                    <p class="text-sm text-gray-600">{{ r.dosage }}</p>
-                    <p v-if="r.notes" class="text-xs text-gray-400 mt-0.5">{{ r.notes }}</p>
                 </div>
 
-                <!-- Actions -->
-                <div class="flex items-center gap-2 flex-shrink-0">
-                    <button
-                        class="p-2 text-gray-400 hover:text-blue-600 rounded-lg hover:bg-blue-50 transition-colors"
-                        title="Toggle active"
-                        @click="toggleActive(r)"
-                    >
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path v-if="r.is_active" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                        </svg>
-                    </button>
-                    <button
-                        class="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-50 transition-colors"
-                        title="Edit"
-                        @click="openEdit(r)"
-                    >
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                    </button>
-                    <button
-                        class="p-2 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors"
-                        title="Delete"
-                        @click="deleteReminder(r)"
-                    >
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                    </button>
+                <!-- Normal row -->
+                <div v-else class="flex items-center gap-4">
+                    <!-- Time badge -->
+                    <div class="shrink-0 w-16 h-16 bg-blue-50 rounded-lg flex flex-col items-center justify-center">
+                        <span class="text-lg font-bold text-blue-800">{{ formatTime(r.reminder_time) }}</span>
+                    </div>
+
+                    <!-- Info -->
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2">
+                            <h3 class="font-semibold text-gray-900">{{ r.medication_name }}</h3>
+                            <span class="text-xs px-2 py-0.5 rounded-full" :class="r.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'">
+                                {{ r.is_active ? 'Active' : 'Paused' }}
+                            </span>
+                        </div>
+                        <p class="text-sm text-gray-600">{{ r.dosage }}</p>
+                        <p v-if="r.notes" class="text-xs text-gray-400 mt-0.5">{{ r.notes }}</p>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="flex items-center gap-2 shrink-0">
+                        <button
+                            class="p-2 text-gray-400 hover:text-blue-600 rounded-lg hover:bg-blue-50 transition-colors"
+                            :title="r.is_active ? 'Pause' : 'Activate'"
+                            @click="toggleActive(r)"
+                        >
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path v-if="r.is_active" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                            </svg>
+                        </button>
+                        <button
+                            class="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-50 transition-colors"
+                            title="Edit"
+                            @click="openEdit(r)"
+                        >
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                        </button>
+                        <button
+                            class="p-2 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors"
+                            title="Delete"
+                            @click="askDelete(r)"
+                        >
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

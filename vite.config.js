@@ -47,6 +47,14 @@ export default defineConfig({
                 importScripts: ['/sw-push.js'],
                 skipWaiting: true,
                 clientsClaim: true,
+                // Never let the SW intercept Inertia XHR or API requests
+                navigateFallback: null,
+                runtimeCaching: [
+                    {
+                        urlPattern: ({ request }) => request.headers.get('X-Inertia') === 'true',
+                        handler: 'NetworkOnly',
+                    },
+                ],
             },
         }),
     ],

@@ -29,9 +29,12 @@ class MedicationReminderController extends Controller
         $validated = $request->validate([
             'medication_name' => 'required|string|max:255',
             'dosage' => 'required|string|max:100',
-            'reminder_time' => 'required|date_format:H:i',
+            'reminder_time' => ['required', 'regex:/^\d{2}:\d{2}(:\d{2})?$/'],
             'notes' => 'nullable|string|max:500',
         ]);
+
+        // Normalize to HH:MM regardless of whether browser sent HH:MM:SS
+        $validated['reminder_time'] = substr($validated['reminder_time'], 0, 5);
 
         $patient = $request->user()->patient;
 
@@ -50,9 +53,11 @@ class MedicationReminderController extends Controller
         $validated = $request->validate([
             'medication_name' => 'required|string|max:255',
             'dosage' => 'required|string|max:100',
-            'reminder_time' => 'required|date_format:H:i',
+            'reminder_time' => ['required', 'regex:/^\d{2}:\d{2}(:\d{2})?$/'],
             'notes' => 'nullable|string|max:500',
         ]);
+
+        $validated['reminder_time'] = substr($validated['reminder_time'], 0, 5);
 
         $reminder->update($validated);
 

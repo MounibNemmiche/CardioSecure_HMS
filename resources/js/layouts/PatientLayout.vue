@@ -1,13 +1,76 @@
 <script setup lang="ts">
 import { router, usePage } from '@inertiajs/vue3'
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import FlashMessage from '@/components/FlashMessage.vue'
 import PwaInstallPrompt from '@/components/PwaInstallPrompt.vue'
 import type { AuthUser } from '@/types'
 
 const page = usePage()
 const auth = page.props.auth as { user: AuthUser }
+const vapidPublicKey = (page.props as any).vapidPublicKey as string | null
 const sidebarOpen = ref(false)
+const notifPermission = ref<NotificationPermission>('default')
+
+function urlBase64ToUint8Array(base64String: string): Uint8Array {
+    const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
+    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
+    const rawData = atob(base64)
+    const output = new Uint8Array(rawData.length)
+    for (let i = 0; i < rawData.length; i++) output[i] = rawData.charCodeAt(i)
+    return output
+}
+
+function getCsrfToken(): string {
+    const parts = `; ${document.cookie}`.split('; XSRF-TOKEN=')
+    if (parts.length === 2) return decodeURIComponent(parts.pop()!.split(';')[0])
+    return ''
+}
+
+async function subscribePush() {
+    if (!vapidPublicKey) return
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return
+    try {
+        const registration = await navigator.serviceWorker.ready
+        let subscription = await registration.pushManager.getSubscription()
+        if (!subscription) {
+            subscription = await registration.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
+            })
+        }
+        const subData = subscription.toJSON()
+        if (!subData.keys?.p256dh || !subData.keys?.auth) return
+        await fetch('/push/subscribe', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-XSRF-TOKEN': getCsrfToken(),
+            },
+            body: JSON.stringify({
+                endpoint: subscription.endpoint,
+                keys: { p256dh: subData.keys.p256dh, auth: subData.keys.auth },
+            }),
+        })
+        notifPermission.value = 'granted'
+    } catch {
+        // optional feature — silent fail
+    }
+}
+
+async function enableNotifications() {
+    if (!('Notification' in window)) return
+    const permission = await Notification.requestPermission()
+    notifPermission.value = permission
+    if (permission === 'granted') await subscribePush()
+}
+
+onMounted(async () => {
+    if (!('Notification' in window)) return
+    notifPermission.value = Notification.permission
+    // If already granted, silently register the subscription without prompting
+    if (Notification.permission === 'granted') await subscribePush()
+})
 
 function logout() {
     router.post('/logout')
@@ -68,6 +131,13 @@ const navLinks = [
             <div class="px-4 py-4 border-t border-gray-100">
                 <p class="text-xs font-medium text-gray-900 truncate">{{ auth.user.name }}</p>
                 <p class="text-xs text-gray-400 truncate mb-2">{{ auth.user.email }}</p>
+                <button
+                    v-if="vapidPublicKey && notifPermission !== 'granted' && notifPermission !== 'denied'"
+                    class="w-full text-left text-xs text-blue-600 hover:text-blue-800 transition-colors duration-200 cursor-pointer mb-2"
+                    @click="enableNotifications"
+                >
+                    Enable Notifications
+                </button>
                 <button
                     class="w-full text-left text-xs text-gray-500 hover:text-red-600 transition-colors duration-200 cursor-pointer"
                     @click="logout"

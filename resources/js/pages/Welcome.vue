@@ -55,7 +55,7 @@ const auth = page.props.auth as { user: { name: string; roles: string[] } | null
 
             <h1 class="text-4xl sm:text-5xl font-extrabold text-gray-900 mb-4 tracking-tight">CardioSecure</h1>
             <p class="text-lg text-gray-500 max-w-lg mb-10 leading-relaxed">
-                Secure cardiology clinic information system. Manage appointments, medical records, and medication reminders — all in one place.
+                Secure cardiology clinic information system. Manage appointments, medical records, and medication reminders - all in one place.
             </p>
 
             <div class="flex flex-col sm:flex-row gap-4">
@@ -122,7 +122,7 @@ const auth = page.props.auth as { user: { name: string; roles: string[] } | null
                             </svg>
                         </div>
                         <h3 class="font-semibold text-gray-900 mb-2">Role-Based Access</h3>
-                        <p class="text-sm text-gray-500 leading-relaxed">Four distinct roles — Patient, Doctor, Staff, Admin — each with tailored permissions and views.</p>
+                        <p class="text-sm text-gray-500 leading-relaxed">Four distinct roles: Patient, Doctor, Staff, and Admin, each with tailored permissions and views.</p>
                     </div>
 
                     <!-- Encryption -->
@@ -144,7 +144,7 @@ const auth = page.props.auth as { user: { name: string; roles: string[] } | null
                             </svg>
                         </div>
                         <h3 class="font-semibold text-gray-900 mb-2">Complete Audit Trail</h3>
-                        <p class="text-sm text-gray-500 leading-relaxed">Every action is logged — logins, record views, file downloads — for full GDPR accountability.</p>
+                        <p class="text-sm text-gray-500 leading-relaxed">Every action is logged: logins, record views, file downloads, for full GDPR accountability.</p>
                     </div>
                 </div>
             </div>
@@ -176,7 +176,7 @@ const auth = page.props.auth as { user: { name: string; roles: string[] } | null
 
         <!-- Footer -->
         <footer class="border-t border-gray-100 py-6 text-center text-xs text-gray-400">
-            CardioSecure &mdash; Secure Cardiology Clinic Information System &middot; Healthcare Information Systems Security &middot; University of Padova
+            CardioSecure - Secure Cardiology Clinic Information System &middot; Healthcare Information Systems Security &middot; University of Padova
         </footer>
     </div>
 </template>

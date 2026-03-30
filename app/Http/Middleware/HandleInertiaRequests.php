@@ -25,6 +25,7 @@ class HandleInertiaRequests extends Middleware
                     'roles' => $request->user()->getRoleNames(),
                 ] : null,
             ],
+            'vapidPublicKey' => config('webpush.vapid.public_key'),
             'flash' => fn () => [
                 'success' => $request->session()->get('flash.success') ?? $request->session()->get('success'),
                 'error' => $request->session()->get('flash.error') ?? $request->session()->get('error'),
