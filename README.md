@@ -2,7 +2,7 @@
 
 **Secure Cardiologist Clinic Information System**
 
-A GDPR-compliant MVP built for the *Healthcare Information Systems Security* course at the University of Padova. CardioSecure demonstrates secure handling of patient health data through role-based access control, mandatory two-factor authentication, AES-256 encryption of sensitive fields, immutable medical records, and comprehensive audit logging.
+A GDPR-compliant MVP built for the *Secure Digital Healthcare* course at the University of Padova. CardioSecure demonstrates secure handling of patient health data through role-based access control, mandatory two-factor authentication, AES-256 encryption of sensitive fields, immutable medical records, and comprehensive audit logging.
 
 ---
 
@@ -166,6 +166,7 @@ Browser -> Laravel Router -> Middleware [Auth, Verified, MFA, Role]
     -> Controller -> Eloquent ORM -> MySQL
     -> Inertia::render() -> Vue Component -> HTML in Browser
 ```
+![Request lifecycle summary](docs/screenshots/Request%20lifecycle%20summary.png)
 
 ---
 
@@ -575,62 +576,15 @@ docker compose ps  # Check STATUS column shows "healthy"
 
 ---
 
-## Production Deployment
-
-### Hostinger Shared Hosting
-
-```
-Hostinger directory structure:
-/home/user/
-+-- public_html/    -> Points to cardiosecure/public/
-+-- cardiosecure/   -> Full Laravel project (above web root)
-```
-
-### Steps
-
-1. Upload project to `/home/user/cardiosecure/`
-2. Point `public_html` to `cardiosecure/public/` via `.htaccess`
-3. Set PHP 8.2+ in Hostinger hPanel
-4. Configure `.env` with production values:
-   ```
-   APP_ENV=production
-   APP_DEBUG=false
-   SESSION_SECURE_COOKIE=true
-   SESSION_SAME_SITE=lax
-   ```
-5. Run setup commands:
-   ```bash
-   composer install --optimize-autoloader --no-dev
-   php artisan key:generate
-   php artisan migrate --seed
-   php artisan storage:link
-   ```
-6. Build frontend locally, upload `public/build/` directory
-7. Add cron job for medication reminders:
-   ```
-   * * * * * cd /home/user/cardiosecure && php artisan schedule:run >> /dev/null 2>&1
-   ```
-
----
-
 ## Course Context
 
-This project was built for the **Healthcare Information Systems Security** course at the **University of Padova** (Dipartimento di Ingegneria dell'Informazione). It demonstrates:
+This project was built for the **Secure Digital Healthcare** course at the **University of Padova**. It demonstrates:
 
 - Secure authentication with mandatory MFA
 - Role-based access control with IDOR prevention
 - AES-256 encryption of sensitive healthcare data (insurance info)
 - Immutable medical records with audit trails
 - GDPR-aware data minimization
-- Cardiology-specific healthcare workflows
-- Progressive Web App with push notifications for medication reminders
-
-### Known Limitations
-
-- PWA push notifications do not work on iOS Safari (documented Apple limitation; works on Android Chrome and desktop browsers)
-- No real insurance verification API integration
-- No multi-clinic support (single clinic MVP)
-- Codice Fiscale is stored as-is without algorithmic validation
 
 ---
 

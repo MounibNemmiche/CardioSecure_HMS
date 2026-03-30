@@ -176,7 +176,7 @@ const auth = page.props.auth as { user: { name: string; roles: string[] } | null
 
         <!-- Footer -->
         <footer class="border-t border-gray-100 py-6 text-center text-xs text-gray-400">
-            CardioSecure - Secure Cardiology Clinic Information System &middot; Healthcare Information Systems Security &middot; University of Padova
+            CardioSecure - Secure Cardiology Clinic Information System &middot; Secure Digital Healthcare &middot; University of Padova
         </footer>
     </div>
 </template>

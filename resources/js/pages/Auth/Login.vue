@@ -36,7 +36,7 @@ function submit() {
                     Manage appointments, view medical records, and stay on top of medication reminders — all protected by two-factor authentication.
                 </p>
             </div>
-            <p class="text-xs text-blue-300">University of Padova &middot; Healthcare Information Systems Security</p>
+            <p class="text-xs text-blue-300">University of Padova &middot; Secure Digital Healthcare</p>
         </div>
 
         <!-- Right form panel -->

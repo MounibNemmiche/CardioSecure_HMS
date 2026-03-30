@@ -60,7 +60,7 @@ function submit() {
                     </div>
                 </div>
             </div>
-            <p class="text-xs text-blue-300">University of Padova &middot; Healthcare Information Systems Security</p>
+            <p class="text-xs text-blue-300">University of Padova &middot; Secure Digital Healthcare</p>
         </div>
 
         <!-- Right form panel -->
